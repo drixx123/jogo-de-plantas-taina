@@ -1,304 +1,317 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>⚡ Vedita Battle</title>
+    <title>VEDITA ⚡ BATTLE</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <div class="game">
+<div class="game-wrapper">
 
-        <!-- TOPO -->
+    <!-- ================= HEADER ================= -->
 
-        <header class="top">
+    <header class="hud">
 
-            <div class="logo">
-                ⚡ VEDITA BATTLE
+        <div class="brand">
+            <span>⚡</span>
+            VEDITA
+            <small>BATTLE</small>
+        </div>
+
+        <div class="hud-item">
+            <span>NÍVEL</span>
+            <strong id="level">1</strong>
+        </div>
+
+        <div class="hud-item">
+            <span>PONTOS</span>
+            <strong id="score">0</strong>
+        </div>
+
+        <div class="hud-item combo-box">
+            <span>COMBO</span>
+            <strong id="combo">0</strong>
+        </div>
+
+    </header>
+
+
+    <!-- ================= STATUS ================= -->
+
+    <section class="status-panel">
+
+        <div class="player-status">
+
+            <div class="name">
+                🥋 VEDITA
             </div>
 
-            <div class="level">
-                NÍVEL
-                <strong id="level">1</strong>
+            <div class="bar-title">
+                VIDA
             </div>
 
-            <div class="score">
-                PONTOS
-                <strong id="score">0</strong>
+            <div class="bar">
+                <div
+                    id="healthBar"
+                    class="health-fill">
+                </div>
             </div>
 
-        </header>
+            <div class="bar-title">
+                ENERGIA
+            </div>
+
+            <div class="bar energy-bar">
+                <div
+                    id="energyBar"
+                    class="energy-fill">
+                </div>
+            </div>
+
+        </div>
+
+        <div class="wave">
+            <span>ONDA</span>
+            <strong id="wave">1</strong>
+        </div>
+
+        <div class="enemy-count">
+            <span>INIMIGOS</span>
+            <strong id="enemyCount">0</strong>
+        </div>
+
+    </section>
 
 
-        <!-- STATUS -->
+    <!-- ================= GAME ================= -->
 
-        <section class="status">
+    <main id="game" class="game-area">
 
-            <div class="status-box">
+        <div class="sky"></div>
 
-                <div class="status-title">
-                    🥋 VEDITA
+        <div class="moon"></div>
+
+        <div class="mountain mountain-one"></div>
+        <div class="mountain mountain-two"></div>
+
+        <div class="stars"></div>
+
+        <div class="ground"></div>
+
+
+        <!-- PLAYER -->
+
+        <div
+            id="player"
+            class="player">
+
+            <div class="player-aura"></div>
+
+            <div class="hair"></div>
+
+            <div class="head">
+                <span class="eye eye-left"></span>
+                <span class="eye eye-right"></span>
+            </div>
+
+            <div class="body"></div>
+
+            <div class="arm arm-left"></div>
+            <div class="arm arm-right"></div>
+
+            <div class="leg leg-left"></div>
+            <div class="leg leg-right"></div>
+
+        </div>
+
+
+        <!-- ENEMIES -->
+
+        <div id="enemies"></div>
+
+
+        <!-- KAMEHAMEHA -->
+
+        <div
+            id="beam"
+            class="beam hidden">
+
+            <div class="beam-core"></div>
+
+        </div>
+
+
+        <!-- PARTICLES -->
+
+        <div id="particles"></div>
+
+
+        <!-- COMBO TEXT -->
+
+        <div
+            id="comboText"
+            class="combo-text">
+        </div>
+
+
+        <!-- MESSAGE -->
+
+        <div
+            id="message"
+            class="message">
+            PREPARE-SE!
+        </div>
+
+
+        <!-- ================= GAME OVER ================= -->
+
+        <div
+            id="gameOver"
+            class="screen hidden">
+
+            <div class="result-card">
+
+                <div class="result-icon">
+                    💀
                 </div>
 
-                <div class="bar-label">
-                    Vida
+                <h1>DERROTA</h1>
+
+                <p>
+                    Os esqueletinhos venceram!
+                </p>
+
+                <div class="final-score">
+                    PONTOS:
+                    <strong id="finalScore">
+                        0
+                    </strong>
                 </div>
 
-                <div class="bar">
-                    <div
-                        id="playerHealth"
-                        class="health"
-                    ></div>
-                </div>
+                <button
+                    id="restartButton"
+                    class="main-button">
 
-                <div class="bar-label">
-                    Energia
-                </div>
+                    🔄 JOGAR NOVAMENTE
 
-                <div class="bar energy-bar">
-                    <div
-                        id="playerEnergy"
-                        class="energy"
-                    ></div>
-                </div>
+                </button>
 
             </div>
 
-
-            <div class="battle-info">
-
-                <span id="enemyCounter">
-                    INIMIGOS: 3
-                </span>
-
-                <span id="wave">
-                    ONDA 1
-                </span>
-
-            </div>
-
-        </section>
+        </div>
 
 
-        <!-- ÁREA DO JOGO -->
+        <!-- ================= VICTORY ================= -->
 
-        <main
-            id="gameArea"
-            class="game-area"
-        >
+        <div
+            id="victory"
+            class="screen hidden">
 
-            <!-- EFEITO DO FUNDO -->
+            <div class="result-card victory-card">
 
-            <div class="stars"></div>
-
-
-            <!-- JOGADOR -->
-
-            <div
-                id="player"
-                class="player"
-            >
-
-                <div class="hair"></div>
-
-                <div class="head">
-                    <div class="eye left"></div>
-                    <div class="eye right"></div>
+                <div class="result-icon">
+                    🏆
                 </div>
 
-                <div class="body"></div>
+                <h1>VITÓRIA!</h1>
 
-                <div class="arm left-arm"></div>
-                <div class="arm right-arm"></div>
+                <p>
+                    Você derrotou todos os inimigos!
+                </p>
 
-                <div class="leg left-leg"></div>
-                <div class="leg right-leg"></div>
-
-                <div class="aura"></div>
-
-            </div>
-
-
-            <!-- INIMIGOS -->
-
-            <div id="enemies"></div>
-
-
-            <!-- PROJÉTIL -->
-
-            <div
-                id="projectile"
-                class="projectile hidden"
-            >
-                <div class="beam-core"></div>
-            </div>
-
-
-            <!-- MENSAGEM -->
-
-            <div
-                id="message"
-                class="message"
-            >
-                PREPARE-SE!
-            </div>
-
-
-            <!-- GAME OVER -->
-
-            <div
-                id="gameOver"
-                class="overlay hidden"
-            >
-
-                <div class="result-box">
-
-                    <div class="result-icon">
-                        💀
-                    </div>
-
-                    <h2>
-                        DERROTA
-                    </h2>
-
-                    <p>
-                        Os esqueletinhos venceram!
-                    </p>
-
-                    <p>
-                        Pontuação:
-                        <strong id="finalScore">
-                            0
-                        </strong>
-                    </p>
-
-                    <button
-                        id="restartButton"
-                        class="restart"
-                    >
-                        🔄 JOGAR NOVAMENTE
-                    </button>
-
+                <div class="final-score">
+                    PONTOS:
+                    <strong id="victoryScore">
+                        0
+                    </strong>
                 </div>
 
-            </div>
+                <button
+                    id="nextLevelButton"
+                    class="main-button">
 
+                    ⚡ PRÓXIMO NÍVEL
 
-            <!-- VITÓRIA -->
-
-            <div
-                id="victory"
-                class="overlay hidden"
-            >
-
-                <div class="result-box victory-box">
-
-                    <div class="result-icon">
-                        🏆
-                    </div>
-
-                    <h2>
-                        VITÓRIA!
-                    </h2>
-
-                    <p>
-                        Você derrotou todos os inimigos!
-                    </p>
-
-                    <p>
-                        Pontuação:
-                        <strong id="victoryScore">
-                            0
-                        </strong>
-                    </p>
-
-                    <button
-                        id="nextLevelButton"
-                        class="restart"
-                    >
-                        ⚡ PRÓXIMO NÍVEL
-                    </button>
-
-                </div>
+                </button>
 
             </div>
 
-        </main>
+        </div>
+
+    </main>
 
 
-        <!-- CONTROLES -->
+    <!-- ================= CONTROLS ================= -->
 
-        <section class="controls">
+    <section class="controls">
 
-            <button
-                id="moveLeft"
-                class="control"
-            >
-                ◀
-            </button>
+        <button
+            id="leftButton"
+            class="control-button">
 
-            <button
-                id="attackButton"
-                class="attack"
-            >
-                👊 ATAQUE
-            </button>
+            ◀
 
-            <button
-                id="kamehamehaButton"
-                class="kamehameha"
-            >
-                ⚡ KAMEHAMEHA
-            </button>
+        </button>
 
-            <button
-                id="moveRight"
-                class="control"
-            >
-                ▶
-            </button>
+        <button
+            id="attackButton"
+            class="attack-button">
 
-        </section>
+            👊 ATAQUE
 
+        </button>
 
-        <!-- INSTRUÇÕES -->
+        <button
+            id="beamButton"
+            class="beam-button">
 
-        <section class="instructions">
+            ⚡ KAMEHAMEHA
 
-            <p>
-                ⌨️
-                <strong>A / ←</strong>
-                mover para esquerda
-            </p>
+        </button>
 
-            <p>
-                ⌨️
-                <strong>D / →</strong>
-                mover para direita
-            </p>
+        <button
+            id="rightButton"
+            class="control-button">
 
-            <p>
-                👊
-                <strong>Espaço</strong>
-                ataque
-            </p>
+            ▶
 
-            <p>
-                ⚡
-                <strong>K</strong>
-                Kamehameha
-            </p>
+        </button>
 
-        </section>
-
-    </div>
+    </section>
 
 
-    <script src="script.js"></script>
+    <!-- ================= HELP ================= -->
+
+    <footer class="help">
+
+        <span>
+            A / ← Mover
+        </span>
+
+        <span>
+            ESPAÇO Ataque
+        </span>
+
+        <span>
+            K Kamehameha
+        </span>
+
+        <span>
+            D / → Mover
+        </span>
+
+    </footer>
+
+</div>
+
+
+<script src="script.js"></script>
 
 </body>
 </html>

@@ -1,59 +1,80 @@
 "use strict";
 
-/* =========================================================
-   VEDITA BATTLE
-   Jogo de batalha usando JavaScript puro.
-========================================================= */
 
-
-/* =========================================================
+/* =====================================================
    ELEMENTOS
-========================================================= */
+===================================================== */
 
 const gameArea =
-    document.getElementById("gameArea");
+    document.getElementById("game");
 
-const playerElement =
+const player =
     document.getElementById("player");
 
-const enemiesElement =
+const enemiesContainer =
     document.getElementById("enemies");
 
-const projectileElement =
-    document.getElementById("projectile");
+const beam =
+    document.getElementById("beam");
 
-const playerHealthElement =
-    document.getElementById("playerHealth");
+const particles =
+    document.getElementById("particles");
 
-const playerEnergyElement =
-    document.getElementById("playerEnergy");
+const healthBar =
+    document.getElementById("healthBar");
 
-const levelElement =
+const energyBar =
+    document.getElementById("energyBar");
+
+const levelText =
     document.getElementById("level");
 
-const scoreElement =
+const scoreText =
     document.getElementById("score");
 
-const enemyCounterElement =
-    document.getElementById("enemyCounter");
+const comboText =
+    document.getElementById("combo");
 
-const waveElement =
+const waveText =
     document.getElementById("wave");
 
-const messageElement =
+const enemyCountText =
+    document.getElementById("enemyCount");
+
+const message =
     document.getElementById("message");
 
-const gameOverElement =
+const comboDisplay =
+    document.getElementById("comboText");
+
+const gameOver =
     document.getElementById("gameOver");
 
-const victoryElement =
+const victory =
     document.getElementById("victory");
 
-const finalScoreElement =
+const finalScore =
     document.getElementById("finalScore");
 
-const victoryScoreElement =
+const victoryScore =
     document.getElementById("victoryScore");
+
+
+/* =====================================================
+   BOTÕES
+===================================================== */
+
+const leftButton =
+    document.getElementById("leftButton");
+
+const rightButton =
+    document.getElementById("rightButton");
+
+const attackButton =
+    document.getElementById("attackButton");
+
+const beamButton =
+    document.getElementById("beamButton");
 
 const restartButton =
     document.getElementById("restartButton");
@@ -61,47 +82,35 @@ const restartButton =
 const nextLevelButton =
     document.getElementById("nextLevelButton");
 
-const attackButton =
-    document.getElementById("attackButton");
 
-const kamehamehaButton =
-    document.getElementById("kamehamehaButton");
-
-const moveLeftButton =
-    document.getElementById("moveLeft");
-
-const moveRightButton =
-    document.getElementById("moveRight");
-
-
-/* =========================================================
-   CONFIGURAÇÕES
-========================================================= */
+/* =====================================================
+   CONFIGURAÇÃO
+===================================================== */
 
 const MAX_LEVEL = 10;
 
-const GAME_WIDTH = 1100;
+const PLAYER_WIDTH = 80;
 
-const PLAYER_WIDTH = 75;
-
-const ENEMY_WIDTH = 65;
+const ENEMY_WIDTH = 70;
 
 
-/* =========================================================
-   ESTADO DO JOGO
-========================================================= */
+/* =====================================================
+   ESTADO
+===================================================== */
 
-let game = {
+const state = {
 
     level: 1,
 
     score: 0,
 
-    playerHealth: 100,
+    combo: 0,
 
-    playerEnergy: 100,
+    health: 100,
 
-    playerX: 100,
+    energy: 100,
+
+    playerX: 80,
 
     enemies: [],
 
@@ -111,16 +120,18 @@ let game = {
 
     attackCooldown: false,
 
-    kamehamehaCooldown: false,
+    beamCooldown: false,
+
+    comboTimer: 0,
 
     lastTime: performance.now()
 
 };
 
 
-/* =========================================================
+/* =====================================================
    UTILITÁRIOS
-========================================================= */
+===================================================== */
 
 function clamp(
     value,
@@ -151,38 +162,219 @@ function random(
 }
 
 
+/* =====================================================
+   MENSAGEM
+===================================================== */
+
 function showMessage(text) {
 
-    messageElement.textContent =
+    message.textContent =
         text;
 
 }
 
 
-/* =========================================================
+/* =====================================================
+   ATUALIZAR HUD
+===================================================== */
+
+function updateHUD() {
+
+    healthBar.style.width =
+        `${state.health}%`;
+
+    energyBar.style.width =
+        `${state.energy}%`;
+
+    levelText.textContent =
+        state.level;
+
+    scoreText.textContent =
+        state.score;
+
+    comboText.textContent =
+        state.combo;
+
+    waveText.textContent =
+        state.level;
+
+    const alive =
+        state.enemies.filter(
+            enemy =>
+                enemy.alive
+        ).length;
+
+    enemyCountText.textContent =
+        alive;
+
+}
+
+
+/* =====================================================
+   POSIÇÃO DO PLAYER
+===================================================== */
+
+function playerCenter() {
+
+    return (
+        state.playerX +
+        PLAYER_WIDTH / 2
+    );
+
+}
+
+
+/* =====================================================
+   POSIÇÃO DO INIMIGO
+===================================================== */
+
+function enemyCenter(enemy) {
+
+    return (
+        enemy.x +
+        ENEMY_WIDTH / 2
+    );
+
+}
+
+
+/* =====================================================
+   CRIAR PARTICULAS
+===================================================== */
+
+function createParticles(
+    x,
+    y,
+    color = "#5bc8ff"
+) {
+
+    for (
+        let i = 0;
+        i < 14;
+        i++
+    ) {
+
+        const particle =
+            document.createElement(
+                "div"
+            );
+
+        particle.className =
+            "particle";
+
+        particle.style.background =
+            color;
+
+        particle.style.left =
+            `${x}px`;
+
+        particle.style.top =
+            `${y}px`;
+
+        particle.style.setProperty(
+            "--x",
+            `${random(-90, 90)}px`
+        );
+
+        particle.style.setProperty(
+            "--y",
+            `${random(-90, 30)}px`
+        );
+
+        particles.appendChild(
+            particle
+        );
+
+
+        setTimeout(
+            () => {
+
+                particle.remove();
+
+            },
+            650
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   COMBO
+===================================================== */
+
+function increaseCombo() {
+
+    state.combo++;
+
+    state.comboTimer =
+        2.5;
+
+
+    if (
+        state.combo >= 2
+    ) {
+
+        comboDisplay.textContent =
+            `${state.combo} COMBO!`;
+
+        comboDisplay.classList.remove(
+            "show"
+        );
+
+
+        void comboDisplay.offsetWidth;
+
+
+        comboDisplay.classList.add(
+            "show"
+        );
+
+    }
+
+}
+
+
+/* =====================================================
+   RESET COMBO
+===================================================== */
+
+function resetCombo() {
+
+    state.combo =
+        0;
+
+}
+
+
+/* =====================================================
    CRIAR INIMIGOS
-========================================================= */
+===================================================== */
 
 function createEnemies() {
 
-    enemiesElement.innerHTML = "";
+    enemiesContainer.innerHTML =
+        "";
 
-    game.enemies = [];
+    state.enemies = [];
+
 
     /*
-        Mais inimigos conforme o nível.
+        O número de inimigos aumenta
+        conforme o nível.
     */
 
-    const enemyCount =
+    const amount =
         Math.min(
-            3 + game.level,
-            10
+            3 + state.level,
+            12
         );
 
 
     for (
         let i = 0;
-        i < enemyCount;
+        i < amount;
         i++
     ) {
 
@@ -191,175 +383,158 @@ function createEnemies() {
     }
 
 
-    updateEnemyCounter();
+    updateHUD();
 
 }
 
 
-/* =========================================================
+/* =====================================================
    CRIAR UM INIMIGO
-========================================================= */
+===================================================== */
 
 function createEnemy(index) {
 
-    const enemyElement =
-        document.createElement("div");
+    const element =
+        document.createElement(
+            "div"
+        );
 
-    enemyElement.className =
+    element.className =
         "enemy";
 
 
     /*
-        Posição inicial.
+        Evita que os inimigos
+        apareçam exatamente
+        em cima uns dos outros.
     */
 
     const startX =
-        gameArea.clientWidth -
-        120 -
-        (index * 80);
+        Math.max(
+            300,
+            gameArea.clientWidth -
+            120 -
+            index * 80
+        );
+
+
+    const maxHealth =
+        100 +
+        (state.level - 1) *
+        25;
 
 
     const enemy = {
 
         id:
-            game.enemyId++,
+            state.enemyId++,
 
         x:
             clamp(
                 startX,
-                300,
-                gameArea.clientWidth - 90
+                260,
+                gameArea.clientWidth -
+                80
             ),
 
         health:
-            100 +
-            ((game.level - 1) * 20),
+            maxHealth,
 
         maxHealth:
-            100 +
-            ((game.level - 1) * 20),
+            maxHealth,
 
         speed:
-            20 +
-            (game.level * 4),
+            18 +
+            state.level * 3,
 
         attackTimer:
             random(
-                1000,
-                2500
+                1,
+                2.5
             ),
 
-        element:
-            enemyElement,
-
         alive:
-            true
+            true,
+
+        element:
+            element
 
     };
 
 
-    /*
-        HTML do esqueleto.
-    */
-
-    enemyElement.innerHTML = `
+    element.innerHTML = `
 
         <div class="enemy-health">
 
             <div
-                class="enemy-health-value"
-            ></div>
+                class="enemy-health-value">
+            </div>
 
         </div>
 
         <div class="skeleton-head">
 
-            <div
-                class="skeleton-eye left"
-            ></div>
+            <span
+                class="skeleton-eye left">
+            </span>
 
-            <div
-                class="skeleton-eye right"
-            ></div>
+            <span
+                class="skeleton-eye right">
+            </span>
 
-            <div
-                class="skeleton-mouth"
-            ></div>
+            <span
+                class="skeleton-mouth">
+            </span>
 
         </div>
 
         <div class="skeleton-body"></div>
 
         <div
-            class="skeleton-arm left"
-        ></div>
+            class="skeleton-arm left">
+        </div>
 
         <div
-            class="skeleton-arm right"
-        ></div>
+            class="skeleton-arm right">
+        </div>
 
         <div
-            class="skeleton-leg left"
-        ></div>
+            class="skeleton-leg left">
+        </div>
 
         <div
-            class="skeleton-leg right"
-        ></div>
+            class="skeleton-leg right">
+        </div>
 
     `;
 
 
-    enemyElement.style.left =
+    element.style.left =
         `${enemy.x}px`;
 
 
-    enemiesElement.appendChild(
-        enemyElement
+    enemiesContainer.appendChild(
+        element
     );
 
 
-    game.enemies.push(
+    state.enemies.push(
         enemy
     );
 
 }
 
 
-/* =========================================================
-   ATUALIZAR CONTADOR
-========================================================= */
-
-function updateEnemyCounter() {
-
-    const alive =
-        game.enemies.filter(
-            enemy => enemy.alive
-        ).length;
-
-
-    enemyCounterElement.textContent =
-        `INIMIGOS: ${alive}`;
-
-}
-
-
-/* =========================================================
-   ATUALIZAR VIDA DO INIMIGO
-========================================================= */
+/* =====================================================
+   VIDA DO INIMIGO
+===================================================== */
 
 function updateEnemyHealth(enemy) {
 
-    const healthElement =
+    const bar =
         enemy.element.querySelector(
             ".enemy-health-value"
         );
-
-
-    if (!healthElement) {
-
-        return;
-
-    }
 
 
     const percentage =
@@ -369,7 +544,7 @@ function updateEnemyHealth(enemy) {
         ) * 100;
 
 
-    healthElement.style.width =
+    bar.style.width =
         `${clamp(
             percentage,
             0,
@@ -379,31 +554,96 @@ function updateEnemyHealth(enemy) {
 }
 
 
-/* =========================================================
+/* =====================================================
+   INIMIGO MAIS PRÓXIMO
+===================================================== */
+
+function closestEnemy() {
+
+    const alive =
+        state.enemies.filter(
+            enemy =>
+                enemy.alive
+        );
+
+
+    if (
+        alive.length === 0
+    ) {
+
+        return null;
+
+    }
+
+
+    let closest =
+        alive[0];
+
+    let distance =
+        Math.abs(
+            playerCenter() -
+            enemyCenter(closest)
+        );
+
+
+    for (
+        let i = 1;
+        i < alive.length;
+        i++
+    ) {
+
+        const enemy =
+            alive[i];
+
+        const currentDistance =
+            Math.abs(
+                playerCenter() -
+                enemyCenter(enemy)
+            );
+
+
+        if (
+            currentDistance <
+            distance
+        ) {
+
+            distance =
+                currentDistance;
+
+            closest =
+                enemy;
+
+        }
+
+    }
+
+
+    return closest;
+
+}
+
+
+/* =====================================================
    ATAQUE NORMAL
-========================================================= */
+===================================================== */
 
 function normalAttack() {
 
-    if (!game.running) {
+    if (
+        !state.running ||
+        state.attackCooldown
+    ) {
 
         return;
 
     }
 
 
-    if (game.attackCooldown) {
-
-        return;
-
-    }
-
-
-    game.attackCooldown =
+    state.attackCooldown =
         true;
 
 
-    playerElement.classList.add(
+    player.classList.add(
         "attacking"
     );
 
@@ -413,37 +653,28 @@ function normalAttack() {
     );
 
 
-    /*
-        Dano.
-    */
-
-    const damage =
-        25 +
-        (game.level * 3);
-
-
-    /*
-        Procura inimigo mais próximo.
-    */
-
     const target =
-        getClosestEnemy();
+        closestEnemy();
 
 
     if (target) {
 
         const distance =
             Math.abs(
-                getPlayerCenter() -
-                getEnemyCenter(target)
+                playerCenter() -
+                enemyCenter(target)
             );
 
 
-        /*
-            Ataque corpo a corpo.
-        */
+        if (
+            distance <= 145
+        ) {
 
-        if (distance <= 150) {
+            const damage =
+                22 +
+                state.level * 4 +
+                state.combo * 3;
+
 
             damageEnemy(
                 target,
@@ -456,69 +687,57 @@ function normalAttack() {
 
 
     setTimeout(
-        function () {
+        () => {
 
-            playerElement.classList.remove(
+            player.classList.remove(
                 "attacking"
             );
 
         },
-        200
+        180
     );
 
 
     setTimeout(
-        function () {
+        () => {
 
-            game.attackCooldown =
+            state.attackCooldown =
                 false;
 
         },
-        450
+        350
     );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    KAMEHAMEHA
-========================================================= */
+===================================================== */
 
-function useKamehameha() {
+function kamehameha() {
 
-    if (!game.running) {
-
-        return;
-
-    }
-
-
-    if (game.kamehamehaCooldown) {
-
-        showMessage(
-            "⚡ O Kamehameha ainda está carregando!"
-        );
+    if (
+        !state.running ||
+        state.beamCooldown
+    ) {
 
         return;
 
     }
 
 
-    /*
-        Custo de energia.
-    */
-
-    const energyCost =
+    const cost =
         35;
 
 
     if (
-        game.playerEnergy <
-        energyCost
+        state.energy <
+        cost
     ) {
 
         showMessage(
-            "❌ Energia insuficiente!"
+            "⚠️ ENERGIA INSUFICIENTE!"
         );
 
         return;
@@ -526,11 +745,11 @@ function useKamehameha() {
     }
 
 
-    game.playerEnergy -=
-        energyCost;
+    state.energy -=
+        cost;
 
 
-    game.kamehamehaCooldown =
+    state.beamCooldown =
         true;
 
 
@@ -539,32 +758,31 @@ function useKamehameha() {
     );
 
 
-    /*
-        Mostra o raio.
-    */
-
-    projectileElement.classList.remove(
+    beam.classList.remove(
         "hidden"
     );
 
 
-    projectileElement.style.left =
-        `${game.playerX + 55}px`;
+    beam.style.left =
+        `${state.playerX + 65}px`;
 
 
     /*
-        Dano em área.
+        O Kamehameha causa dano
+        em vários inimigos.
     */
 
     const damage =
         70 +
-        (game.level * 10);
+        state.level * 12;
 
 
-    game.enemies.forEach(
-        function (enemy) {
+    state.enemies.forEach(
+        enemy => {
 
-            if (!enemy.alive) {
+            if (
+                !enemy.alive
+            ) {
 
                 return;
 
@@ -572,18 +790,14 @@ function useKamehameha() {
 
 
             const distance =
-                Math.abs(
-                    getPlayerCenter() -
-                    getEnemyCenter(enemy)
-                );
+                enemyCenter(enemy) -
+                playerCenter();
 
 
-            /*
-                O Kamehameha atinge
-                uma distância maior.
-            */
-
-            if (distance <= 500) {
+            if (
+                distance > -50 &&
+                distance < 620
+            ) {
 
                 damageEnemy(
                     enemy,
@@ -596,42 +810,44 @@ function useKamehameha() {
     );
 
 
-    /*
-        Remove o raio.
-    */
+    createParticles(
+        state.playerX + 100,
+        gameArea.clientHeight - 180,
+        "#69d5ff"
+    );
+
+
+    updateHUD();
+
 
     setTimeout(
-        function () {
+        () => {
 
-            projectileElement.classList.add(
+            beam.classList.add(
                 "hidden"
             );
 
         },
-        350
+        450
     );
 
 
-    /*
-        Cooldown.
-    */
-
     setTimeout(
-        function () {
+        () => {
 
-            game.kamehamehaCooldown =
+            state.beamCooldown =
                 false;
 
         },
-        1000
+        1200
     );
 
 }
 
 
-/* =========================================================
-   DANIFICAR INIMIGO
-========================================================= */
+/* =====================================================
+   DANO
+===================================================== */
 
 function damageEnemy(
     enemy,
@@ -652,14 +868,34 @@ function damageEnemy(
         damage;
 
 
+    enemy.element.classList.add(
+        "damaged"
+    );
+
+
+    setTimeout(
+        () => {
+
+            enemy.element.classList.remove(
+                "damaged"
+            );
+
+        },
+        180
+    );
+
+
+    createParticles(
+        enemy.x + 35,
+        gameArea.clientHeight - 180,
+        "#ffdc55"
+    );
+
+
     updateEnemyHealth(
         enemy
     );
 
-
-    /*
-        Se morreu.
-    */
 
     if (
         enemy.health <= 0
@@ -671,16 +907,21 @@ function damageEnemy(
 
     }
 
+
+    updateHUD();
+
 }
 
 
-/* =========================================================
+/* =====================================================
    MATAR INIMIGO
-========================================================= */
+===================================================== */
 
 function killEnemy(enemy) {
 
-    if (!enemy.alive) {
+    if (
+        !enemy.alive
+    ) {
 
         return;
 
@@ -696,37 +937,48 @@ function killEnemy(enemy) {
     );
 
 
-    /*
-        Pontos.
-    */
+    increaseCombo();
 
-    game.score +=
+
+    const points =
         100 *
-        game.level;
+        state.level *
+        Math.max(
+            state.combo,
+            1
+        );
+
+
+    state.score +=
+        points;
 
 
     /*
-        Recupera energia.
+        Recupera um pouco de energia.
     */
 
-    game.playerEnergy =
+    state.energy =
         clamp(
-            game.playerEnergy + 15,
+            state.energy + 12,
             0,
             100
         );
 
 
-    updateScore();
+    createParticles(
+        enemy.x + 35,
+        gameArea.clientHeight - 160,
+        "#ffffff"
+    );
 
-    updateEnemyCounter();
+
+    updateHUD();
 
 
     setTimeout(
-        function () {
+        () => {
 
             if (
-                enemy.element &&
                 enemy.element.parentNode
             ) {
 
@@ -735,185 +987,95 @@ function killEnemy(enemy) {
             }
 
         },
-        450
+        500
     );
 
-
-    /*
-        Verifica vitória.
-    */
 
     checkVictory();
 
 }
 
 
-/* =========================================================
-   INIMIGO MAIS PRÓXIMO
-========================================================= */
+/* =====================================================
+   MOVIMENTO DO PLAYER
+===================================================== */
 
-function getClosestEnemy() {
-
-    const aliveEnemies =
-        game.enemies.filter(
-            enemy => enemy.alive
-        );
-
+function movePlayer(
+    direction
+) {
 
     if (
-        aliveEnemies.length === 0
+        !state.running
     ) {
-
-        return null;
-
-    }
-
-
-    let closest =
-        aliveEnemies[0];
-
-
-    let closestDistance =
-        Math.abs(
-            game.playerX -
-            closest.x
-        );
-
-
-    for (
-        let i = 1;
-        i < aliveEnemies.length;
-        i++
-    ) {
-
-        const enemy =
-            aliveEnemies[i];
-
-
-        const distance =
-            Math.abs(
-                game.playerX -
-                enemy.x
-            );
-
-
-        if (
-            distance <
-            closestDistance
-        ) {
-
-            closest =
-                enemy;
-
-            closestDistance =
-                distance;
-
-        }
-
-    }
-
-
-    return closest;
-
-}
-
-
-/* =========================================================
-   POSIÇÕES
-========================================================= */
-
-function getPlayerCenter() {
-
-    return (
-        game.playerX +
-        PLAYER_WIDTH / 2
-    );
-
-}
-
-
-function getEnemyCenter(enemy) {
-
-    return (
-        enemy.x +
-        ENEMY_WIDTH / 2
-    );
-
-}
-
-
-/* =========================================================
-   MOVER JOGADOR
-========================================================= */
-
-function movePlayer(direction) {
-
-    if (!game.running) {
 
         return;
 
     }
 
 
-    const width =
-        gameArea.clientWidth;
-
-
-    const amount =
+    const movement =
         45;
 
 
-    game.playerX +=
+    state.playerX +=
         direction *
-        amount;
+        movement;
 
 
-    /*
-        Limites.
-    */
-
-    game.playerX =
+    state.playerX =
         clamp(
-            game.playerX,
+            state.playerX,
             10,
-            width -
+            gameArea.clientWidth -
             PLAYER_WIDTH -
             10
         );
 
 
-    playerElement.style.left =
-        `${game.playerX}px`;
+    player.style.left =
+        `${state.playerX}px`;
 
 }
 
 
-/* =========================================================
+/* =====================================================
    IA DOS INIMIGOS
-========================================================= */
+===================================================== */
 
-function updateEnemies(deltaTime) {
+function updateEnemies(
+    delta
+) {
 
-    if (!game.running) {
+    if (
+        !state.running
+    ) {
 
         return;
 
     }
 
 
-    game.enemies.forEach(
-        function (enemy) {
+    state.enemies.forEach(
+        enemy => {
 
-            if (!enemy.alive) {
+            if (
+                !enemy.alive
+            ) {
 
                 return;
 
             }
 
 
+            const difference =
+                playerCenter() -
+                enemyCenter(enemy);
+
+
             const distance =
-                getPlayerCenter() -
-                getEnemyCenter(enemy);
+                Math.abs(
+                    difference
+                );
 
 
             /*
@@ -921,35 +1083,24 @@ function updateEnemies(deltaTime) {
             */
 
             if (
-                Math.abs(distance)
-                > 90
+                distance > 90
             ) {
 
-                if (
-                    distance < 0
-                ) {
+                const direction =
+                    difference > 0
+                        ? 1
+                        : -1;
 
-                    enemy.x -=
-                        enemy.speed *
-                        deltaTime;
 
-                } else {
-
-                    enemy.x +=
-                        enemy.speed *
-                        deltaTime;
-
-                }
+                enemy.x +=
+                    direction *
+                    enemy.speed *
+                    delta;
 
             } else {
 
-                /*
-                    Ataque do inimigo.
-                */
-
                 enemy.attackTimer -=
-                    deltaTime *
-                    1000;
+                    delta;
 
 
                 if (
@@ -963,18 +1114,14 @@ function updateEnemies(deltaTime) {
 
                     enemy.attackTimer =
                         random(
-                            1200,
-                            2500
+                            1.2,
+                            2.5
                         );
 
                 }
 
             }
 
-
-            /*
-                Limites.
-            */
 
             enemy.x =
                 clamp(
@@ -994,13 +1141,15 @@ function updateEnemies(deltaTime) {
 }
 
 
-/* =========================================================
-   ATAQUE DOS ESQUELETOS
-========================================================= */
+/* =====================================================
+   ATAQUE DO INIMIGO
+===================================================== */
 
 function enemyAttack(enemy) {
 
-    if (!game.running) {
+    if (
+        !state.running
+    ) {
 
         return;
 
@@ -1008,31 +1157,31 @@ function enemyAttack(enemy) {
 
 
     const damage =
-        5 +
-        game.level;
+        4 +
+        state.level;
 
 
-    game.playerHealth -=
+    state.health -=
         damage;
 
 
-    game.playerHealth =
+    state.health =
         clamp(
-            game.playerHealth,
+            state.health,
             0,
             100
         );
 
 
-    playerElement.classList.add(
+    player.classList.add(
         "hit"
     );
 
 
     setTimeout(
-        function () {
+        () => {
 
-            playerElement.classList.remove(
+            player.classList.remove(
                 "hit"
             );
 
@@ -1041,16 +1190,26 @@ function enemyAttack(enemy) {
     );
 
 
-    showMessage(
-        `💀 O esqueleto atacou! -${damage} HP`
+    createParticles(
+        state.playerX + 40,
+        gameArea.clientHeight - 170,
+        "#ff4444"
     );
 
 
-    updateHealth();
+    resetCombo();
+
+
+    showMessage(
+        `💀 Você sofreu ${damage} de dano!`
+    );
+
+
+    updateHUD();
 
 
     if (
-        game.playerHealth <= 0
+        state.health <= 0
     ) {
 
         endGame();
@@ -1060,103 +1219,104 @@ function enemyAttack(enemy) {
 }
 
 
-/* =========================================================
-   REGENERAR ENERGIA
-========================================================= */
+/* =====================================================
+   ENERGIA
+===================================================== */
 
-function regenerateEnergy(deltaTime) {
+function regenerateEnergy(
+    delta
+) {
 
-    if (!game.running) {
+    if (
+        !state.running
+    ) {
 
         return;
 
     }
 
 
-    game.playerEnergy +=
-        5 *
-        deltaTime;
+    state.energy +=
+        5 * delta;
 
 
-    game.playerEnergy =
+    state.energy =
         clamp(
-            game.playerEnergy,
+            state.energy,
             0,
             100
         );
 
 
-    updateEnergy();
+    updateHUD();
 
 }
 
 
-/* =========================================================
-   INTERFACE
-========================================================= */
+/* =====================================================
+   COMBO TIMER
+===================================================== */
 
-function updateHealth() {
+function updateCombo(
+    delta
+) {
 
-    playerHealthElement.style.width =
-        `${game.playerHealth}%`;
+    if (
+        state.combo <= 0
+    ) {
 
-}
+        return;
 
-
-function updateEnergy() {
-
-    playerEnergyElement.style.width =
-        `${game.playerEnergy}%`;
-
-}
+    }
 
 
-function updateScore() {
-
-    scoreElement.textContent =
-        game.score;
-
-}
+    state.comboTimer -=
+        delta;
 
 
-function updateLevel() {
+    if (
+        state.comboTimer <= 0
+    ) {
 
-    levelElement.textContent =
-        game.level;
+        resetCombo();
 
-    waveElement.textContent =
-        `ONDA ${game.level}`;
+        updateHUD();
+
+    }
 
 }
 
 
-/* =========================================================
-   VERIFICAR VITÓRIA
-========================================================= */
+/* =====================================================
+   VITÓRIA
+===================================================== */
 
 function checkVictory() {
 
     const alive =
-        game.enemies.filter(
-            enemy => enemy.alive
-        ).length;
+        state.enemies.filter(
+            enemy =>
+                enemy.alive
+        );
 
 
     if (
-        alive === 0
+        alive.length === 0
     ) {
 
         setTimeout(
-            function () {
+            () => {
 
-                if (game.running) {
+                if (
+                    state.running
+                ) {
 
                     showVictory();
 
                 }
 
             },
-            500
+            600
         );
 
     }
@@ -1164,21 +1324,17 @@ function checkVictory() {
 }
 
 
-/* =========================================================
-   VITÓRIA
-========================================================= */
-
 function showVictory() {
 
-    game.running =
+    state.running =
         false;
 
 
-    victoryScoreElement.textContent =
-        game.score;
+    victoryScore.textContent =
+        state.score;
 
 
-    victoryElement.classList.remove(
+    victory.classList.remove(
         "hidden"
     );
 
@@ -1190,19 +1346,19 @@ function showVictory() {
 }
 
 
-/* =========================================================
+/* =====================================================
    PRÓXIMO NÍVEL
-========================================================= */
+===================================================== */
 
 function nextLevel() {
 
     if (
-        game.level >=
+        state.level >=
         MAX_LEVEL
     ) {
 
         showMessage(
-            "🏆 Você chegou ao nível máximo!"
+            "🏆 VOCÊ CHEGOU AO NÍVEL MÁXIMO!"
         );
 
         return;
@@ -1210,58 +1366,60 @@ function nextLevel() {
     }
 
 
-    game.level++;
+    state.level++;
 
-
-    game.playerHealth =
+    state.health =
         100;
 
-
-    game.playerEnergy =
+    state.energy =
         100;
 
+    state.combo =
+        0;
 
-    game.running =
+    state.playerX =
+        80;
+
+    state.running =
         true;
 
 
-    victoryElement.classList.add(
+    player.style.left =
+        `${state.playerX}px`;
+
+
+    victory.classList.add(
         "hidden"
     );
 
 
-    updateLevel();
-
-    updateHealth();
-
-    updateEnergy();
-
-
     createEnemies();
+
+    updateHUD();
 
 
     showMessage(
-        `⚡ NÍVEL ${game.level}! Prepare-se!`
+        `⚡ NÍVEL ${state.level}!`
     );
 
 }
 
 
-/* =========================================================
+/* =====================================================
    GAME OVER
-========================================================= */
+===================================================== */
 
 function endGame() {
 
-    game.running =
+    state.running =
         false;
 
 
-    finalScoreElement.textContent =
-        game.score;
+    finalScore.textContent =
+        state.score;
 
 
-    gameOverElement.classList.remove(
+    gameOver.classList.remove(
         "hidden"
     );
 
@@ -1273,80 +1431,79 @@ function endGame() {
 }
 
 
-/* =========================================================
+/* =====================================================
    REINICIAR
-========================================================= */
+===================================================== */
 
 function restartGame() {
 
-    game.level = 1;
+    state.level =
+        1;
 
-    game.score = 0;
+    state.score =
+        0;
 
-    game.playerHealth = 100;
+    state.combo =
+        0;
 
-    game.playerEnergy = 100;
+    state.health =
+        100;
 
-    game.playerX = 100;
+    state.energy =
+        100;
 
-    game.enemyId = 0;
+    state.playerX =
+        80;
 
-    game.running = true;
+    state.enemyId =
+        0;
 
-    game.attackCooldown = false;
+    state.running =
+        true;
 
-    game.kamehamehaCooldown = false;
+    state.attackCooldown =
+        false;
+
+    state.beamCooldown =
+        false;
 
 
-    playerElement.style.left =
-        `${game.playerX}px`;
+    player.style.left =
+        `${state.playerX}px`;
 
 
-    gameOverElement.classList.add(
+    gameOver.classList.add(
         "hidden"
     );
 
-
-    victoryElement.classList.add(
+    victory.classList.add(
         "hidden"
     );
-
-
-    updateLevel();
-
-    updateScore();
-
-    updateHealth();
-
-    updateEnergy();
 
 
     createEnemies();
 
+    updateHUD();
+
 
     showMessage(
-        "🥋 Prepare-se! Os esqueletinhos estão chegando!"
+        "🥋 PREPARE-SE!"
     );
 
 }
 
 
-/* =========================================================
-   CONTROLES DE TECLADO
-========================================================= */
+/* =====================================================
+   TECLADO
+===================================================== */
 
 document.addEventListener(
     "keydown",
-    function (event) {
+    event => {
 
         const key =
             event.key.toLowerCase();
 
-
-        /*
-            Evita o navegador
-            rolar a página com espaço.
-        */
 
         if (
             key === " " ||
@@ -1392,7 +1549,7 @@ document.addEventListener(
             key === "k"
         ) {
 
-            useKamehameha();
+            kamehameha();
 
         }
 
@@ -1400,110 +1557,88 @@ document.addEventListener(
 );
 
 
-/* =========================================================
-   CONTROLES DE BOTÕES
-========================================================= */
+/* =====================================================
+   BOTÕES
+===================================================== */
 
-moveLeftButton.addEventListener(
+leftButton.addEventListener(
     "click",
-    function () {
-
-        movePlayer(-1);
-
-    }
+    () => movePlayer(-1)
 );
 
 
-moveRightButton.addEventListener(
+rightButton.addEventListener(
     "click",
-    function () {
-
-        movePlayer(1);
-
-    }
+    () => movePlayer(1)
 );
 
 
 attackButton.addEventListener(
     "click",
-    function () {
-
-        normalAttack();
-
-    }
+    normalAttack
 );
 
 
-kamehamehaButton.addEventListener(
+beamButton.addEventListener(
     "click",
-    function () {
-
-        useKamehameha();
-
-    }
+    kamehameha
 );
 
 
 restartButton.addEventListener(
     "click",
-    function () {
-
-        restartGame();
-
-    }
+    restartGame
 );
 
 
 nextLevelButton.addEventListener(
     "click",
-    function () {
-
-        nextLevel();
-
-    }
+    nextLevel
 );
 
 
-/* =========================================================
-   LOOP PRINCIPAL
-========================================================= */
+/* =====================================================
+   LOOP DO JOGO
+===================================================== */
 
-function gameLoop(currentTime) {
+function gameLoop(time) {
 
-    /*
-        Delta time em segundos.
-    */
-
-    let deltaTime =
+    let delta =
         (
-            currentTime -
-            game.lastTime
+            time -
+            state.lastTime
         ) / 1000;
 
 
     /*
-        Evita valores enormes
-        caso a aba fique parada.
+        Impede que o jogo fique
+        muito rápido depois de
+        uma pausa.
     */
 
-    deltaTime =
+    delta =
         Math.min(
-            deltaTime,
-            0.05
+            delta,
+            .05
         );
 
 
-    game.lastTime =
-        currentTime;
+    state.lastTime =
+        time;
 
 
     updateEnemies(
-        deltaTime
+        delta
     );
 
 
     regenerateEnergy(
-        deltaTime
+        delta
+    );
+
+
+    updateCombo(
+        delta
     );
 
 
@@ -1514,34 +1649,27 @@ function gameLoop(currentTime) {
 }
 
 
-/* =========================================================
+/* =====================================================
    INICIALIZAÇÃO
-========================================================= */
+===================================================== */
 
-function initializeGame() {
-
-    playerElement.style.left =
-        `${game.playerX}px`;
-
-
-    updateHealth();
-
-    updateEnergy();
-
-    updateScore();
-
-    updateLevel();
-
+function initialize() {
 
     createEnemies();
 
+    updateHUD();
+
+
+    player.style.left =
+        `${state.playerX}px`;
+
 
     showMessage(
-        "🥋 Derrote os esqueletinhos! Use K para lançar o Kamehameha!"
+        "🥋 Derrote os esqueletinhos!"
     );
 
 
-    game.lastTime =
+    state.lastTime =
         performance.now();
 
 
@@ -1552,4 +1680,4 @@ function initializeGame() {
 }
 
 
-initializeGame();
+initialize();
